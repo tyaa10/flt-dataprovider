@@ -1,62 +1,97 @@
 package org.tyaa.training.current.dataprovider.excel;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.formula.eval.NotImplementedException;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
 import org.tyaa.training.current.dataprovider.models.WordStudyExportModel;
+import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Service
 public class ExcelFileReader {
-    public static void read() throws IOException {
-        final List<WordStudyExportModel> words = new ArrayList<>();
+    /**
+     * Прочесть файл xlsx с данными для изучения слов
+     * @param filePath путь к файлу в файловой системе, например, /home/yurii/Documents/flt/looks.xlsx, D:/tmp/looks.xlsx и так далее
+     * */
+    public List<IExportModel> readWordStudy(String filePath) throws IOException {
 
-        final String path = "/home/yurii/Documents/flt/looks.xlsx";
-        FileInputStream file = new FileInputStream(path);
+        FileInputStream file = new FileInputStream(filePath);
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(1);
-        Map<Integer, List<String>> data = new HashMap<>();
-        int i = 0;
-        for (Row row : sheet) {
-            data.put(i, new ArrayList<>());
-            for (Cell cell : row) {
-                switch (cell.getCellType()) {
-                    case STRING: data.get(i).add(cell.getStringCellValue()); break;
-                    case NUMERIC: data.get(i).add(String.valueOf(cell.getNumericCellValue())); break;
-                    // case BOOLEAN: ... break;
-                    // case FORMULA: ... break;
-                    default: data.get(i).add(" ");
-                }
+
+        Map<String, Integer> headerMap = new HashMap<>();
+        int headerCellIndex = 0;
+
+        for (Cell headerCell : sheet.getRow(0)) {
+            String headerCellValue = headerCell.getStringCellValue();
+            if (!headerCellValue.isBlank()) {
+                headerMap.put(headerCell.getStringCellValue(), headerCellIndex);
             }
-            i++;
+            headerCellIndex++;
         }
 
-        XSSFDrawing patriarch = sheet.createDrawingPatriarch();
-        List<XSSFShape> shapes = patriarch.getShapes();
-        Map<Integer, byte[]> imageByLocations = shapes.stream()
-                .filter(Picture.class::isInstance)
-                .map(s -> (Picture) s)
-                .map(this::toMapEntry)
-                .collect(toMap(Pair::getKey, Pair::getValue));
+        LinkedHashMap<Integer, List<String>> data = new LinkedHashMap<>();
+        int rowCellIndex = 0;
+        for (Row row : sheet) {
+            if(rowCellIndex == 0) {
+                rowCellIndex++;
+                continue;
+            }
+            data.put(rowCellIndex, new ArrayList<>());
+            for (Cell cell : row) {
+                switch (cell.getCellType()) {
+                    case STRING -> data.get(rowCellIndex).add(cell.getStringCellValue());
+                    case NUMERIC -> data.get(rowCellIndex).add(String.valueOf(cell.getNumericCellValue()));
+                    // case BOOLEAN: ... break;
+                    // case FORMULA: ... break;
+                    // default: data.get(i).add(" ");
+                }
+            }
+            rowCellIndex++;
+        }
 
+        XSSFDrawing patriarch = (XSSFDrawing) sheet.createDrawingPatriarch();
+        List<XSSFShape> shapes = patriarch.getShapes();
+        List<byte[]> picturesData =
+            shapes.stream()
+                    .filter(Picture.class::isInstance)
+                    .map(s -> (Picture) s)
+                    .map(picture -> picture.getPictureData().getData())
+                    .toList();
+
+        System.out.println(headerMap);
+
+        System.out.println(data);
+
+        final List<IExportModel> words = new ArrayList<>();
         data.forEach((index, strings) -> {
-            words.add(WordStudyExportModel.builder()
-                            .levelName(strings.get(0))
-                            .lessonName(strings.get(1))
+            if (!strings.isEmpty() && !strings.get(0).isBlank()) {
+                /* System.out.println(index);
+                System.out.println(strings.get(headerMap.get("Уровень")));
+                System.out.println(strings.get(headerMap.get("урок")));
+                System.out.println(Base64.getEncoder().encodeToString(picturesData.get(index - 1))); */
+                words.add(WordStudyExportModel.builder()
+                            .levelName(strings.get(headerMap.get("Уровень")))
+                            .lessonName(strings.get(headerMap.get("урок")))
+                            .image(Base64.getEncoder().encodeToString(picturesData.get(index - 1)))
                             .build());
-            /* System.out.println("Row #1:");
-            strings.forEach(s -> {
-                System.out.printf("%20s", s);
-            }); */
+                // System.out.println();
+            }
         });
+        return words;
+    }
+
+    /**
+     * Прочесть файл xlsx с данными для проверки знания слов
+     * @param filePath путь к файлу в файловой системе
+     * */
+    public void readWordTest(String filePath) {
+        throw new NotImplementedException("Not implemented yet");
     }
 }

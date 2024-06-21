@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/dataprovider.iml" filepath="$PROJECT_DIR$/.idea/dataprovider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dataprovider/dataprovider.iml" filepath="$PROJECT_DIR$/dataprovider/dataprovider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/flt-dataprovider.iml" filepath="$PROJECT_DIR$/.idea/flt-dataprovider.iml" />
     </modules>
   </component>
 </project>
