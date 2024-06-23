@@ -31,7 +31,7 @@ public class ExcelFileReader {
         for (Cell headerCell : sheet.getRow(0)) {
             String headerCellValue = headerCell.getStringCellValue();
             if (!headerCellValue.isBlank()) {
-                headerMap.put(headerCell.getStringCellValue(), headerCellIndex);
+                headerMap.put(headerCellValue, headerCellIndex);
             }
             headerCellIndex++;
         }

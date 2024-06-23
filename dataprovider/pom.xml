@@ -14,7 +14,7 @@
 	<name>dataprovider</name>
 	<description>Data provider client</description>
 	<properties>
-		<java.version>22</java.version>
+		<java.version>21</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
