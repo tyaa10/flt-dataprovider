@@ -11,8 +11,11 @@ import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
 @NoArgsConstructor
 @Builder
 public class WordStudyExportModel implements IExportModel {
-    public Long id;
     public String levelName;
     public String lessonName;
+    public Integer sequenceNumber;
+    public String word;
+    public String translation;
     public String image;
+    public String pronunciationAudio;
 }
