@@ -129,6 +129,7 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
                                     return false;
                                 }
                             }).findFirst().get().getPictureData().getData()))
+                            .pronunciationAudio("STUB")
                             .build());
                 /*} catch (IOException e) {
                     throw new RuntimeException(e);
