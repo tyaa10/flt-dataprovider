@@ -113,8 +113,10 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
                 //try {
                 System.out.println("NO: " + values.get(headerMap.get("номер объекта")));
                     words.add(WordStudyExportModel.builder()
-                            .levelName((String) values.get(headerMap.get("уровень")))
                             .lessonName((String) values.get(headerMap.get("урок")))
+                            .nativeLanguageName((String) values.get(headerMap.get("родной язык")))
+                            .learningLanguageName((String) values.get(headerMap.get("изучаемый язык")))
+                            .levelName((String) values.get(headerMap.get("уровень")))
                             .sequenceNumber((Integer) values.get(headerMap.get("номер объекта")))
                             .word((String) values.get(headerMap.get("слово")))
                             .translation((String) values.get(headerMap.get("перевод")))
