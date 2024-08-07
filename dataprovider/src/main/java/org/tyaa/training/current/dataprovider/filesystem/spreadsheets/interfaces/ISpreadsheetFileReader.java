@@ -1,4 +1,4 @@
-package org.tyaa.training.current.dataprovider.spreadsheet.interfaces;
+package org.tyaa.training.current.dataprovider.filesystem.spreadsheets.interfaces;
 
 import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
 

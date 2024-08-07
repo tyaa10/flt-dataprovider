@@ -1,10 +1,10 @@
-package org.tyaa.training.current.dataprovider.spreadsheet;
+package org.tyaa.training.current.dataprovider.filesystem.spreadsheets;
 
 import com.spire.xls.Workbook;
 import com.spire.xls.Worksheet;
 import org.springframework.stereotype.Service;
+import org.tyaa.training.current.dataprovider.filesystem.spreadsheets.interfaces.ISpreadsheetFileReader;
 import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
-import org.tyaa.training.current.dataprovider.spreadsheet.interfaces.ISpreadsheetFileReader;
 
 import java.io.IOException;
 import java.util.Arrays;

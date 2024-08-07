@@ -1,4 +1,4 @@
-package org.tyaa.training.current.dataprovider.spreadsheet;
+package org.tyaa.training.current.dataprovider.filesystem.spreadsheets;
 
 import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.apache.poi.ss.usermodel.*;
@@ -6,20 +6,30 @@ import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.tyaa.training.current.dataprovider.filesystem.mediafiles.BinaryFilesReader;
+import org.tyaa.training.current.dataprovider.filesystem.spreadsheets.interfaces.ISpreadsheetFileReader;
 import org.tyaa.training.current.dataprovider.models.WordStudyExportModel;
 import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
-import org.tyaa.training.current.dataprovider.spreadsheet.interfaces.ISpreadsheetFileReader;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
 public class ExcelFileReader implements ISpreadsheetFileReader {
+
+    private final BinaryFilesReader binaryFilesReader;
+
+    public ExcelFileReader(BinaryFilesReader binaryFilesReader) {
+        this.binaryFilesReader = binaryFilesReader;
+    }
+
     /**
      * Прочесть файл xlsx с данными для изучения слов
      * @param filePath путь к файлу в файловой системе, например, /home/yurii/Documents/flt/looks.xlsx, D:/tmp/looks.xlsx и так далее
      * */
+    @Override
     public List<IExportModel> readWordStudy(String filePath) throws IOException {
 
         FileInputStream file = new FileInputStream(filePath);
@@ -42,15 +52,23 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
         // Чтение текстовых и числовых данных строк в словарь
         LinkedHashMap<Integer, Map<Integer, Object>> simpleData = new LinkedHashMap<>();
         int rowCellIndex = 0;
+        // перебор всех рядов данных
         for (Row row : sheet) {
+            // первый ряд пропускается, так как в нём - заголовки колонок
             if(rowCellIndex == 0) {
                 rowCellIndex++;
                 continue;
             }
+            // для каждого ряда создаётся одно вхождение словаря рядов:
+            // ключ - индекс ячейки в ряду
+            // значение - пустой словарь для накопления значений из ячеек ряда
             simpleData.put(rowCellIndex, new LinkedHashMap<>());
+            // перебор всех ячеек в ряду
             for (Cell cell : row) {
                 System.out.println(cell.getCellType());
                 switch (cell.getCellType()) {
+                    // в зависимости от типа данных в ячейке, они приводятся к соответствующему Java-типу
+                    // и добавляются в словарь значений ячеек ряда
                     case STRING -> simpleData.get(rowCellIndex).put(cell.getColumnIndex(), cell.getStringCellValue().isBlank() ? "-" : cell.getStringCellValue());
                     case NUMERIC -> simpleData.get(rowCellIndex).put(cell.getColumnIndex(), (int) Math.round(cell.getNumericCellValue()));
                     // case BLANK -> simpleData.get(rowCellIndex).add("-");
@@ -63,7 +81,7 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
             rowCellIndex++;
         }
 
-        // Чтение двоичных данных (изображений и аудио) листа в список
+        // Чтение двоичных данных (изображений) листа в список
         XSSFDrawing patriarch = (XSSFDrawing) sheet.createDrawingPatriarch();
         // patriarch.getShapes().forEach(xssfShape -> System.out.println(xssfShape));
         // patriarch.getCTDrawing().getOneCellAnchorList().forEach(ctOneCellAnchor -> System.out.println(ctOneCellAnchor));
@@ -112,6 +130,7 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
             if (!values.isEmpty() && !values.get(0).toString().isBlank()) {
                 //try {
                 System.out.println("NO: " + values.get(headerMap.get("номер объекта")));
+                try {
                     words.add(WordStudyExportModel.builder()
                             .lessonName((String) values.get(headerMap.get("урок")))
                             .nativeLanguageName((String) values.get(headerMap.get("родной язык")))
@@ -129,8 +148,18 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
                                     return false;
                                 }
                             }).findFirst().get().getPictureData().getData()))
-                            .pronunciationAudio("STUB")
-                            .build());
+                            .pronunciationAudio(
+                                getAudioFileBase64(
+                                        filePath,
+                                        (String) values.get(headerMap.get("изучаемый язык")),
+                                        (String) values.get(headerMap.get("перевод"))
+                                )
+
+                            ).build());
+                } catch (IOException ex) {
+                    System.err.printf("Не удалось прочесть медиафайл: %s%n", ex.getMessage());
+                    throw new RuntimeException(ex);
+                }
                 /*} catch (IOException e) {
                     throw new RuntimeException(e);
                 }*/
@@ -140,11 +169,12 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
         return words;
     }
 
-    /**
-     * Прочесть файл xlsx с данными для проверки знания слов
-     * @param filePath путь к файлу в файловой системе
-     * */
-    public void readWordTest(String filePath) {
-        throw new NotImplementedException("Not implemented yet");
+    private String getAudioFileBase64(String excelFilePath, String learningLanguageName, String wordTranslation) throws IOException {
+        return binaryFilesReader.read(Paths.get(
+                Paths.get(excelFilePath).getParent().toString(),
+                "audio",
+                learningLanguageName,
+                String.format("%s.mp3", wordTranslation)
+        ).toString());
     }
 }

@@ -1,6 +1,5 @@
 package org.tyaa.training.current.dataprovider.network;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.tyaa.training.current.dataprovider.models.interfaces.IExportModel;
@@ -23,11 +22,11 @@ public class RestApiSender implements ISender {
         this.httpClient = httpClient;
     }
 
-    public void send(List<IExportModel> data, String uri) throws IOException, InterruptedException {
+    public void send(List<IExportModel> data, String uriString) throws IOException, InterruptedException {
         System.out.println(objectMapper.writeValueAsString(data));
         HttpRequest request = HttpRequest.newBuilder()
                 // TODO заменить динамически формируемым uri
-                .uri(URI.create("http://localhost:8090/lang-trainer/api/import/lessons/word-study"))
+                .uri(URI.create(uriString))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(data)))
                 .build();
