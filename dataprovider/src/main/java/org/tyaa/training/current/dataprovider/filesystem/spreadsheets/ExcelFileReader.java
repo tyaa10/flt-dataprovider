@@ -42,7 +42,7 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
         int headerCellIndex = 0;
 
         for (Cell headerCell : sheet.getRow(0)) {
-            String headerCellValue = headerCell.getStringCellValue();
+            String headerCellValue = headerCell.getStringCellValue().trim();
             if (!headerCellValue.isBlank()) {
                 headerMap.put(headerCellValue, headerCellIndex);
             }
@@ -69,7 +69,7 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
                 switch (cell.getCellType()) {
                     // в зависимости от типа данных в ячейке, они приводятся к соответствующему Java-типу
                     // и добавляются в словарь значений ячеек ряда
-                    case STRING -> simpleData.get(rowCellIndex).put(cell.getColumnIndex(), cell.getStringCellValue().isBlank() ? "-" : cell.getStringCellValue());
+                    case STRING -> simpleData.get(rowCellIndex).put(cell.getColumnIndex(), cell.getStringCellValue().isBlank() ? "-" : cell.getStringCellValue().trim());
                     case NUMERIC -> simpleData.get(rowCellIndex).put(cell.getColumnIndex(), (int) Math.round(cell.getNumericCellValue()));
                     // case BLANK -> simpleData.get(rowCellIndex).add("-");
                     // case BOOLEAN: ... break;
@@ -151,8 +151,8 @@ public class ExcelFileReader implements ISpreadsheetFileReader {
                             .pronunciationAudio(
                                 getAudioFileBase64(
                                         filePath,
-                                        (String) values.get(headerMap.get("изучаемый язык")),
-                                        (String) values.get(headerMap.get("перевод"))
+                                        ((String) values.get(headerMap.get("изучаемый язык"))).trim(),
+                                        ((String) values.get(headerMap.get("перевод"))).trim()
                                 )
 
                             ).build());
